@@ -4,58 +4,37 @@ import {
   BadgeCheck,
   BookOpen,
   BriefcaseBusiness,
-  Check,
-  Clock3,
   ExternalLink,
   FileOutput,
   FlaskConical,
+  LockKeyhole,
   Target,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { VisualFlow } from '../components/VisualFlow'
+import { useAuth } from '../context/AuthContext'
+import { apiLessons, apiModules } from '../data/apiCourseContent'
+import { apiQuestionBank } from '../data/apiQuestionBank'
 import { courses } from '../data/catalog'
-import { lessonKey, loadProgress, saveProgress, type ProgressState } from '../data/progress'
+import { getLocalLmsState, localLessonKey } from '../lib/lmsProgress'
 
 export function CourseDetailPage() {
   const { courseId } = useParams()
+  const { user, configured } = useAuth()
   const course = courses.find((item) => item.id === courseId)
-  const [progress, setProgress] = useState<ProgressState>({})
-
-  useEffect(() => {
-    setProgress(loadProgress())
-  }, [courseId])
-
-  const counts = useMemo(() => {
-    if (!course) return { total: 0, completed: 0, percent: 0 }
-    let total = 0
-    let completed = 0
-    course.modules.forEach((module, moduleIndex) => {
-      module.lessons.forEach((_, lessonIndex) => {
-        total += 1
-        if (progress[lessonKey(course.id, moduleIndex, lessonIndex)]) completed += 1
-      })
-    })
-    return { total, completed, percent: total ? Math.round((completed / total) * 100) : 0 }
-  }, [course, progress])
 
   if (!course) {
-    return (
-      <section className="section empty-state">
-        <h1>Course not found</h1>
-        <Link className="button primary" to="/courses">Return to courses</Link>
-      </section>
-    )
+    return <section className="section empty-state"><h1>Course not found</h1><Link className="button primary" to="/courses">Return to courses</Link></section>
   }
 
-  const currentIndex = courses.findIndex((item) => item.id === course.id)
-  const nextCourse = courses[currentIndex + 1]
-
-  function toggleLesson(key: string) {
-    const next = { ...progress, [key]: !progress[key] }
-    setProgress(next)
-    saveProgress(next)
-  }
+  const productionCourse = course.id === 'apis-webhooks-integration'
+  const state = getLocalLmsState()
+  const completed = productionCourse
+    ? apiLessons.filter((lesson) => state.completedLessons[localLessonKey(course.id, lesson.id)]).length
+    : 0
+  const percent = productionCourse ? Math.round((completed / apiLessons.length) * 100) : 0
+  const startLesson = apiLessons.find((lesson) => !state.completedLessons[localLessonKey(course.id, lesson.id)]) ?? apiLessons[0]
+  const accessLink = configured && !user ? '/account' : `/learn/${course.id}/${startLesson?.id}`
 
   return (
     <>
@@ -67,22 +46,32 @@ export function CourseDetailPage() {
               <div className="course-card-topline course-detail-topline">
                 <span className="course-code">{course.code}</span>
                 <span className={`priority priority-${course.priority.toLowerCase()}`}>{course.priority}</span>
+                {productionCourse && <span className="production-badge">Fully authored</span>}
               </div>
               <span className="eyebrow">{course.category}</span>
               <h1>{course.title}</h1>
               <p className="hero-lede">{course.description}</p>
               <div className="course-detail-meta">
-                <span><Clock3 size={18} /> {course.hours} hours</span>
-                <span><BookOpen size={18} /> {course.modules.length} modules</span>
+                <span><BookOpen size={18} /> {productionCourse ? apiLessons.length : course.modules.reduce((sum, module) => sum + module.lessons.length, 0)} lessons</span>
                 <span><Target size={18} /> {course.difficulty}</span>
+                {productionCourse && <span><BadgeCheck size={18} /> {apiQuestionBank.length} quiz questions</span>}
               </div>
+              {productionCourse && (
+                <div className="hero-actions">
+                  <Link className="button primary" to={accessLink} state={!user ? { from: `/learn/${course.id}/${startLesson?.id}` } : undefined}>
+                    {configured && !user ? <LockKeyhole size={18} /> : <ArrowRight size={18} />}
+                    {completed > 0 ? 'Continue course' : 'Begin course'}
+                  </Link>
+                  <Link className="button secondary" to={`/quiz/${course.id}/apis-final-assessment`}>View final assessment</Link>
+                </div>
+              )}
             </div>
             <div className="progress-card">
-              <span className="eyebrow">Your progress</span>
-              <div className="progress-number">{counts.percent}%</div>
-              <div className="progress-track"><div style={{ width: `${counts.percent}%` }} /></div>
-              <p>{counts.completed} of {counts.total} lessons completed</p>
-              <small>Progress is stored locally in this browser.</small>
+              <span className="eyebrow">Course status</span>
+              <div className="progress-number">{productionCourse ? `${percent}%` : 'Preview'}</div>
+              {productionCourse && <div className="progress-track"><div style={{ width: `${percent}%` }} /></div>}
+              <p>{productionCourse ? `${completed} of ${apiLessons.length} lessons complete` : 'This course currently has a detailed curriculum outline. Full lesson production follows the API course standard.'}</p>
+              <small>{productionCourse ? 'Signed-in learners sync progress across devices. Local demo progress is available before Supabase configuration.' : 'Production sequencing is tracked in the LMS build plan.'}</small>
             </div>
           </div>
         </div>
@@ -93,9 +82,7 @@ export function CourseDetailPage() {
           <div>
             <span className="eyebrow">You will be able to</span>
             <div className="outcome-list">
-              {course.outcomes.map((outcome) => (
-                <div key={outcome}><BadgeCheck size={20} /><span>{outcome}</span></div>
-              ))}
+              {course.outcomes.map((outcome) => <div key={outcome}><BadgeCheck size={20} /><span>{outcome}</span></div>)}
             </div>
           </div>
           <div className="resume-bridge-card">
@@ -107,9 +94,7 @@ export function CourseDetailPage() {
       </section>
 
       <section className="section section-tinted">
-        <div className="container">
-          <VisualFlow title={course.visual.title} steps={course.visual.steps} />
-        </div>
+        <div className="container"><VisualFlow title={course.visual.title} steps={course.visual.steps} /></div>
       </section>
 
       <section className="section">
@@ -117,39 +102,31 @@ export function CourseDetailPage() {
           <div>
             <div className="section-heading">
               <span className="eyebrow">Course curriculum</span>
-              <h2>Modules and guided lessons</h2>
-              <p>Check lessons off as you complete the concept, demonstration, and practice work.</p>
+              <h2>{productionCourse ? 'Instruction, scenarios, labs, and assessments' : 'Modules and planned lesson sequence'}</h2>
+              <p>{productionCourse ? 'Every lesson contains written instruction, an implementation scenario, a guided lab, answer guidance, credited sources, and completion tracking.' : 'The current outline defines the production scope that will be authored using the same standard as ORI-200.'}</p>
             </div>
             <div className="module-list">
-              {course.modules.map((module, moduleIndex) => (
-                <article className="module-card" key={module.title}>
-                  <div className="module-number">{String(moduleIndex + 1).padStart(2, '0')}</div>
+              {(productionCourse ? apiModules : course.modules.map((module, index) => ({ id: `outline-${index}`, title: module.title, order: index + 1, lessons: module.lessons }))).map((module) => (
+                <article className="module-card" key={module.id}>
+                  <div className="module-number">{String(module.order).padStart(2, '0')}</div>
                   <div className="module-body">
                     <h3>{module.title}</h3>
-                    <p>{module.summary}</p>
-                    <div className="lesson-list">
-                      {module.lessons.map((lesson, lessonIndex) => {
-                        const key = lessonKey(course.id, moduleIndex, lessonIndex)
-                        const checked = Boolean(progress[key])
+                    <div className="lesson-link-list">
+                      {module.lessons.map((lessonRef, lessonIndex) => {
+                        if (!productionCourse) return <div className="outline-lesson" key={lessonRef}><span>{lessonIndex + 1}</span><strong>{lessonRef}</strong></div>
+                        const lesson = apiLessons.find((item) => item.id === lessonRef)
+                        if (!lesson) return null
+                        const done = Boolean(state.completedLessons[localLessonKey(course.id, lesson.id)])
                         return (
-                          <button
-                            type="button"
-                            className={checked ? 'lesson-row checked' : 'lesson-row'}
-                            key={lesson}
-                            onClick={() => toggleLesson(key)}
-                          >
-                            <span className="check-box">{checked && <Check size={15} />}</span>
-                            <span>{lesson}</span>
-                          </button>
+                          <Link className={done ? 'lesson-link complete' : 'lesson-link'} to={`/learn/${course.id}/${lesson.id}`} key={lesson.id}>
+                            <span>{done ? <BadgeCheck size={17} /> : `${lesson.lessonOrder}`}</span>
+                            <div><strong>{lesson.title}</strong><small>{lesson.objective}</small></div>
+                            <ArrowRight size={17} />
+                          </Link>
                         )
                       })}
                     </div>
-                    {module.lab && (
-                      <div className="lab-callout">
-                        <FlaskConical size={19} />
-                        <div><strong>Guided lab</strong><span>{module.lab}</span></div>
-                      </div>
-                    )}
+                    {productionCourse && <Link className="module-quiz-link" to={`/quiz/${course.id}/apis-${module.id}-quiz`}><Target size={17} /> Module quiz: 10 randomized questions from a 24-question bank</Link>}
                   </div>
                 </article>
               ))}
@@ -157,47 +134,17 @@ export function CourseDetailPage() {
           </div>
 
           <aside className="course-sidebar">
-            <div className="sidebar-card">
-              <FileOutput size={23} />
-              <span className="eyebrow">Portfolio artifact</span>
-              <p>{course.artifact}</p>
-            </div>
-            <div className="sidebar-card">
-              <Target size={23} />
-              <span className="eyebrow">Capstone</span>
-              <p>{course.capstone}</p>
-            </div>
-            <div className="sidebar-card">
-              <BriefcaseBusiness size={23} />
-              <span className="eyebrow">Interview translation</span>
-              <p>{course.interviewTranslation}</p>
-            </div>
+            <div className="sidebar-card"><FileOutput size={23} /><span className="eyebrow">Portfolio artifact</span><p>{course.artifact}</p></div>
+            <div className="sidebar-card"><Target size={23} /><span className="eyebrow">Capstone</span><p>{course.capstone}</p></div>
+            <div className="sidebar-card"><BriefcaseBusiness size={23} /><span className="eyebrow">Interview translation</span><p>{course.interviewTranslation}</p></div>
+            {productionCourse && <div className="sidebar-card"><FlaskConical size={23} /><span className="eyebrow">Assessment model</span><p>Eight module quizzes and a 30-question final. Each attempt randomizes questions and option order, requires 80%, allows unlimited retakes, and explains every answer.</p></div>}
             <div className="sidebar-card resource-card">
               <span className="eyebrow">Official resources</span>
-              {course.resources.map((resource) => (
-                <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer">
-                  <span><small>{resource.type}</small>{resource.label}</span>
-                  <ExternalLink size={16} />
-                </a>
-              ))}
+              {course.resources.map((resource) => <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer"><span><small>{resource.type}</small>{resource.label}</span><ExternalLink size={16} /></a>)}
             </div>
           </aside>
         </div>
       </section>
-
-      {nextCourse && (
-        <section className="next-course-section">
-          <div className="container next-course-inner">
-            <div>
-              <span className="eyebrow">Next in the full curriculum</span>
-              <h2>{nextCourse.title}</h2>
-            </div>
-            <Link className="button primary" to={`/courses/${nextCourse.id}`}>
-              Continue <ArrowRight size={18} />
-            </Link>
-          </div>
-        </section>
-      )}
     </>
   )
 }
