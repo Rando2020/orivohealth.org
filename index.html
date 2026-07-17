@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07110f" />
+    <meta
+      name="description"
+      content="Orivo Health Academy teaches practical technical fluency for healthcare product, implementation, data, analytics, and governance leaders."
+    />
+    <title>Orivo Health Academy</title>
+  </head>
+  <body>
+    <script>
+      ;(function restoreRoute() {
+        const params = new URLSearchParams(window.location.search)
+        const path = params.get('p')
+        if (path) window.history.replaceState(null, '', decodeURIComponent(path))
+      })()
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
