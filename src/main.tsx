@@ -8,6 +8,7 @@ import './styles2.css'
 import './styles3.css'
 import './styles4.css'
 import './styles-lms.css'
+import './styles-lms2.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
