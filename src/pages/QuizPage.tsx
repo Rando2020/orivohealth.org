@@ -30,6 +30,8 @@ export function QuizPage() {
     return <section className="section empty-state"><h1>Quiz not found</h1><Link className="button primary" to="/courses">Return to courses</Link></section>
   }
 
+  const activeDefinition = definition
+
   function select(question: QuizQuestion, optionId: string) {
     if (submitted) return
     setAnswers((current) => {
@@ -45,7 +47,7 @@ export function QuizPage() {
     const calculated = scoreQuiz(questions, answers)
     setScore(calculated)
     setSubmitted(true)
-    await recordQuizAttempt(user, definition.courseId, definition.id, calculated, questions.map((question) => question.id), answers)
+    await recordQuizAttempt(user, activeDefinition.courseId, activeDefinition.id, calculated, questions.map((question) => question.id), answers)
   }
 
   function retake() {
@@ -57,22 +59,22 @@ export function QuizPage() {
   }
 
   const answeredCount = Object.values(answers).filter((value) => value.length > 0).length
-  const passed = score >= definition.passingScore
+  const passed = score >= activeDefinition.passingScore
 
   return (
     <>
       <section className="quiz-hero">
         <div className="container quiz-hero-grid">
           <div>
-            <Link className="back-link" to={`/courses/${definition.courseId}`}><ArrowLeft size={17} /> Course overview</Link>
+            <Link className="back-link" to={`/courses/${activeDefinition.courseId}`}><ArrowLeft size={17} /> Course overview</Link>
             <span className="eyebrow">Randomized assessment</span>
-            <h1>{definition.title}</h1>
-            <p>{definition.description}</p>
+            <h1>{activeDefinition.title}</h1>
+            <p>{activeDefinition.description}</p>
           </div>
           <div className="quiz-summary-card">
-            <div><strong>{definition.questionCount}</strong><span>questions this attempt</span></div>
+            <div><strong>{activeDefinition.questionCount}</strong><span>questions this attempt</span></div>
             <div><strong>{pool.length}</strong><span>questions in the source bank</span></div>
-            <div><strong>{definition.passingScore}%</strong><span>required to pass</span></div>
+            <div><strong>{activeDefinition.passingScore}%</strong><span>required to pass</span></div>
           </div>
         </div>
       </section>
@@ -134,7 +136,7 @@ export function QuizPage() {
                   <div className="progress-number">{score}%</div>
                   <div className="progress-track"><div style={{ width: `${score}%` }} /></div>
                   <h3>{passed ? 'Assessment passed' : 'Keep building the model'}</h3>
-                  <p>{passed ? 'Your score has been saved. Review the explanations and continue.' : `Review the explanations and retake. You need ${definition.passingScore}% to pass.`}</p>
+                  <p>{passed ? 'Your score has been saved. Review the explanations and continue.' : `Review the explanations and retake. You need ${activeDefinition.passingScore}% to pass.`}</p>
                   <button className="button secondary" type="button" onClick={retake}><RefreshCw size={17} /> Retake with new questions</button>
                 </>
               )}
