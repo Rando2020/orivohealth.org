@@ -63,7 +63,9 @@ Course and interview content lives in `src/data/catalog.ts`. The application is 
 
 The workflow in `.github/workflows/deploy-pages.yml` builds and deploys the `dist` directory to GitHub Pages whenever changes reach `main`.
 
-The `CNAME` file targets `orivohealth.org`. Confirm the repository Pages settings and DNS configuration before production launch.
+Because the site publishes through a custom GitHub Actions workflow, configure `orivohealth.org` in **Repository Settings > Pages > Custom domain**. GitHub ignores a repository `CNAME` file for this publishing method.
+
+For Namecheap DNS, point the apex `@` host to the four GitHub Pages IPv4 addresses and point `www` to `rando2020.github.io`. Remove conflicting parking, redirect, A, AAAA, ALIAS, or CNAME records for the same hosts before running GitHub's DNS check.
 
 ## Content safety
 
