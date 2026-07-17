@@ -1,6 +1,7 @@
-import { Menu, X } from 'lucide-react'
+import { LogOut, Menu, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { Brand } from './Brand'
 
 const navItems = [
@@ -14,6 +15,7 @@ const navItems = [
 export function Layout() {
   const [open, setOpen] = useState(false)
   const location = useLocation()
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     setOpen(false)
@@ -27,13 +29,18 @@ export function Layout() {
           <Brand />
           <nav className={open ? 'site-nav open' : 'site-nav'} aria-label="Primary navigation">
             {navItems.map((item) => (
-              <NavLink key={item.to} to={item.to}>
-                {item.label}
-              </NavLink>
+              <NavLink key={item.to} to={item.to}>{item.label}</NavLink>
             ))}
-            <NavLink className="nav-cta" to="/courses/apis-webhooks-integration">
-              Start with APIs
-            </NavLink>
+            {user ? (
+              <button className="nav-account-button" type="button" onClick={() => void signOut()} title="Sign out">
+                <UserRound size={16} />
+                <span>{user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'Learner'}</span>
+                <LogOut size={14} />
+              </button>
+            ) : (
+              <NavLink className="nav-account-button" to="/account"><UserRound size={16} /> Sign in</NavLink>
+            )}
+            <NavLink className="nav-cta" to="/courses/apis-webhooks-integration">Start with APIs</NavLink>
           </nav>
           <button
             className="menu-button"
@@ -45,24 +52,20 @@ export function Layout() {
           </button>
         </div>
       </header>
-      <main>
-        <Outlet />
-      </main>
+      <main><Outlet /></main>
       <footer className="site-footer">
         <div className="container footer-grid">
           <div>
             <Brand />
-            <p>
-              Practical technical fluency for healthcare product, implementation, analytics, and governance leaders.
-            </p>
+            <p>Practical technical fluency for healthcare product, implementation, analytics, and governance leaders.</p>
           </div>
           <div>
             <strong>Build proof, not buzzwords.</strong>
-            <p>Every course ends with a portfolio artifact and an interview translation.</p>
+            <p>Every production course includes instruction, visuals, labs, randomized assessments, and portfolio evidence.</p>
           </div>
           <div>
             <strong>Curriculum status</strong>
-            <p>Standards and vendor resources reviewed for 2026. External links open official documentation.</p>
+            <p>Standards and vendor resources are credited at lesson level. Public exercises use synthetic data only.</p>
           </div>
         </div>
       </footer>
