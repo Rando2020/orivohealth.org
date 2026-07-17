@@ -56,12 +56,19 @@ export interface QuizOption {
   text: string
 }
 
+export interface QuizPromptTable {
+  headers: string[]
+  rows: string[][]
+}
+
 export interface QuizQuestion {
   id: string
   courseId: string
   moduleId: string
   type: QuizQuestionType
   prompt: string
+  code?: string
+  table?: QuizPromptTable
   options: QuizOption[]
   correctOptionIds: string[]
   explanation: string
