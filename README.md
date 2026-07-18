@@ -13,13 +13,13 @@ A portfolio-first technical learning platform for healthcare product, implementa
 - Email/password and Google authentication through Supabase
 - Local demo progress when Supabase is not configured
 - Cross-device lesson progress and quiz-attempt storage when signed in
-- Vercel SPA deployment configuration
-- Supabase Postgres schema and Row Level Security policies
-- ORI-315 PMP, Hybrid Delivery, and Agile Ceremonies production outline
+- Vercel SPA routing and production security headers
+- Automated registry, scoring, SQLite, build, and browser smoke validation
+- Route-aware metadata, robots policy, sitemap, favicon, skip navigation, reduced-motion behavior, and learner-safe error states
 
 ## Production course registry
 
-`src/data/productionCourseRegistry.ts` registers production lessons, modules, question banks, quiz definitions, capstones, and downloads. Lesson, quiz, course-detail, and dashboard pages resolve content through this registry, allowing future HL7, FHIR, PMP, and other courses to reuse the same LMS experience.
+`src/data/productionCourseRegistry.ts` registers lessons, modules, question banks, quiz definitions, capstones, and downloads. Generic course, lesson, quiz, and dashboard pages resolve content through the registry. `src/data/registryValidation.ts` verifies references, duplicate IDs, correct options, quiz pools, and required lesson data.
 
 ## SQL course practice database
 
@@ -48,7 +48,13 @@ Inside SQLite:
 .read public/downloads/sql-course/03_lab_queries.sql
 ```
 
-DuckDB can also read the schema with minor compatibility adjustments. SQLite is the supported baseline because it is free, local, and requires no learner account or cloud data upload.
+Validate the complete downloadable dataset with:
+
+```bash
+npm run test:sql
+```
+
+SQLite is the supported baseline because it is free, local, and requires no learner account or cloud data upload.
 
 ## Curriculum
 
@@ -84,43 +90,80 @@ VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 ```
 
+Never place a Supabase service-role key in a `VITE_` variable or browser code.
+
+## Validation commands
+
+```bash
+npm run test          # Vitest scoring and registry integrity
+npm run test:sql      # SQLite schema, fixtures, answers, and safety checks
+npm run build         # TypeScript and Vite production build
+npm run test:e2e      # Playwright desktop and mobile smoke tests
+```
+
+GitHub Actions runs all required checks. Browser smoke tests cover API and SQL course routes, local lesson completion, quiz submission, dashboard rendering, SQL download access, invalid deep links, and page-level overflow.
+
 ## Supabase setup
 
 1. Create a Supabase project.
 2. Run `supabase/migrations/001_lms.sql` in the SQL editor.
-3. Enable Email authentication.
-4. Configure Google as an OAuth provider.
-5. Add local and production redirect URLs.
-6. Add the project URL and publishable key to local and Vercel environment variables.
+3. Confirm Row Level Security is enabled and policies use `auth.uid()`.
+4. Enable Email authentication.
+5. Configure email confirmation and sender templates.
+6. Configure Google as an OAuth provider.
+7. Add local, Vercel Preview, and production redirect URLs.
+8. Add the project URL and publishable key to Vercel Preview and Production.
+9. Redeploy after changing Vite environment variables.
+10. Complete the two-user RLS test in `docs/AUTHENTICATION_SETUP.md`.
 
 ## Vercel deployment
 
 1. Import `Rando2020/orivohealth.org` into Vercel.
-2. Use `npm run build` and output directory `dist`.
-3. Add both Supabase environment variables for Preview and Production.
-4. Validate account-disabled local mode and Supabase-enabled preview mode.
-5. Move `orivohealth.org` only after the Vercel production deployment is validated.
+2. Framework preset: Vite.
+3. Build command: `npm run build`.
+4. Output directory: `dist`.
+5. Node version: 22.
+6. Add both Supabase variables for Preview and Production.
+7. Validate local-fallback behavior on Preview before adding credentials.
+8. Validate email and Google authentication after adding credentials.
+9. Run `docs/MANUAL_QA_CHECKLIST.md`.
+10. Add `orivohealth.org` and `www.orivohealth.org` to Vercel.
+11. Copy the exact Vercel DNS values and remove conflicting GitHub Pages records only after Preview approval.
+12. Confirm SSL, HTTPS redirect, canonical domain, deep links, and security headers.
+13. Record the previous known-good deployment before production promotion.
+14. Follow `docs/INCIDENT_AND_ROLLBACK.md` if production validation fails.
 
-`vercel.json` rewrites application routes to `index.html` so account, lesson, quiz, and course deep links work.
+`vercel.json` rewrites application routes to `index.html` and adds CSP, HSTS, frame, no-sniff, referrer, and permissions-policy headers.
+
+## Production runbooks
+
+- `docs/PRODUCTION_LAUNCH_CHECKLIST.md`: deployment, DNS, SSL, authentication, smoke, and rollback gates
+- `docs/MANUAL_QA_CHECKLIST.md`: desktop, mobile, accessibility, local, Supabase, quiz, and SQL validation
+- `docs/AUTHENTICATION_SETUP.md`: Supabase, OAuth, RLS, redirects, and local-to-cloud behavior
+- `docs/INCIDENT_AND_ROLLBACK.md`: severity, evidence, containment, Vercel rollback, recovery, and postmortem
 
 ## Content architecture
 
 - `src/data/productionCourseRegistry.ts`: reusable production-course registry
+- `src/data/registryValidation.ts`: structural and assessment integrity checks
 - `src/data/apiCourseContent.ts`: 32 production API lessons
 - `src/data/apiQuestionBank.ts`: 192 API assessment questions
 - `src/data/sqlCourseContent.ts`: 44 production SQL lessons
 - `src/data/sqlQuestionBank.ts`: 330 SQL assessment questions
-- `src/data/lmsTypes.ts`: reusable lesson and quiz contracts, including code and table prompts
-- `src/pages/LessonPage.tsx`: generic lesson, visual, scenario, lab, source, and download experience
-- `src/pages/QuizPage.tsx`: generic randomized quiz engine with code, table, and source support
-- `src/pages/DashboardPage.tsx`: multi-course learner progress
-- `src/context/AuthContext.tsx`: learner authentication
+- `src/data/lmsTypes.ts`: reusable lesson and quiz contracts
+- `src/pages/LessonPage.tsx`: generic lesson, visual, scenario, lab, source, download, and synchronized completion experience
+- `src/pages/QuizPage.tsx`: randomized assessment engine with exact scoring, code, tables, sources, empty-pool protection, and safe synchronization
+- `src/pages/DashboardPage.tsx`: multi-course learner progress and synchronization status
+- `src/context/AuthContext.tsx`: learner authentication and safe error translation
 - `src/lib/lmsProgress.ts`: local and Supabase progress persistence
+- `src/lib/quizScoring.ts`: tested exact scoring helpers
+- `tests/smoke.spec.ts`: desktop and mobile browser validation
+- `scripts/validate-sql.sh`: executable SQL dataset validation
 
 ## Production content standard
 
-Every course promoted from outline to production should contain fully written lessons, credited original diagrams, implementation scenarios, guided labs, answer criteria, a large randomized question bank, module quizzes, a final assessment, a portfolio capstone, and interview translation.
+Every course promoted from outline to production should contain fully written lessons, credited original diagrams, implementation scenarios, guided labs, answer criteria, a large randomized question bank, module quizzes, a final assessment, a portfolio capstone, interview translation, registry integrity validation, executable asset checks, and passing browser smoke tests.
 
-## Content safety
+## Content and identity safety
 
-All course labs and portfolio projects must use synthetic data. Do not publish employer, client, patient, PHI, PII, confidential, or proprietary material.
+All course labs and portfolio projects must use synthetic data. Do not publish employer, client, patient, PHI, PII, confidential, or proprietary material. Orivo Health Academy does not claim accreditation, certification authority, compliance approval, or official endorsement from standards bodies or vendors referenced in course sources.
