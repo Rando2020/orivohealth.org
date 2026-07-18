@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppErrorBoundary } from './AppErrorBoundary'
 
-function BrokenComponent() {
+function BrokenComponent(): ReactNode {
   throw new Error('internal secret diagnostic')
 }
 
