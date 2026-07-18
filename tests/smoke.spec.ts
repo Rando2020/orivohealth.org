@@ -33,8 +33,8 @@ test('core learner path works in local fallback mode', async ({ page, request })
   await expect(page.getByText('Attempt result')).toBeVisible()
 
   await page.goto('/dashboard')
-  await expect(page.getByText('API Integration')).toBeVisible()
-  await expect(page.getByText('SQL for Product Leaders')).toBeVisible()
+  await expect(page.getByText('ORI-200', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('ORI-110', { exact: true }).first()).toBeVisible()
 })
 
 test('invalid deep links render useful states', async ({ page }) => {
