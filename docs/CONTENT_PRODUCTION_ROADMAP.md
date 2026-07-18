@@ -1,10 +1,10 @@
 # Content Production Roadmap
 
-The academy contains 16 courses. ORI-200 is the first production-complete course and defines the quality bar for the rest.
+The academy contains 16 courses. ORI-200 and ORI-110 are production-complete and establish the reusable quality bar for future courses.
 
 ## Production-complete standard
 
-A course is not considered complete until it has:
+A course is not complete until it has:
 
 1. Fully written learner-facing lessons
 2. Credited original or adapted visuals
@@ -16,28 +16,34 @@ A course is not considered complete until it has:
 8. Portfolio capstone
 9. Account-synchronized progress
 10. Completion and certificate criteria
+11. Registration in `productionCourseRegistry.ts`
+12. Passing TypeScript and production build validation
 
-## Sequencing
+## Production status
 
-1. ORI-200 APIs, Webhooks, Postman, and Integration Design: implemented in this branch
-2. ORI-110 SQL for Product and Implementation Leaders
-3. ORI-100 Systems, Environments, and Deployment Foundations
-4. ORI-120 Snowflake and Informatica Data Operations
-5. ORI-210 HL7 v2 Fundamentals
-6. ORI-220 FHIR Implementation Fundamentals
-7. ORI-320 Data Quality, Testing, and Observability
-8. ORI-315 PMP, Hybrid Delivery, and Agile Ceremonies
-9. ORI-240 Adobe Experience Platform, CJA, Target, and Analytics
-10. ORI-230 Data Governance with DAMA-DMBOK
-11. ORI-300 Product Implementation Guidelines and Standards
-12. ORI-310 Modern Agile Product Leadership
-13. ORI-140 Python and AI-Assisted Automation
-14. ORI-130 JavaScript for Technical Implementers
-15. ORI-330 Cloud, Security, and Integration Architecture
-16. ORI-400 Technical and Behavioral Interviewing
+1. ORI-200 APIs, Webhooks, Postman, and Integration Design: complete
+2. ORI-110 SQL for Product and Implementation Leaders: complete
 
-## Question-bank target
+## Next sequencing
 
-Every module should have a source bank substantially larger than the quiz presented to a learner. The current API course has 24 source questions per module and presents 10 per module attempt. The final draws 30 from all 192 questions.
+1. ORI-100 Systems, Environments, and Deployment Foundations
+2. ORI-120 Snowflake and Informatica Data Operations
+3. ORI-210 HL7 v2 Fundamentals
+4. ORI-220 FHIR Implementation Fundamentals
+5. ORI-320 Data Quality, Testing, and Observability
+6. ORI-315 PMP, Hybrid Delivery, and Agile Ceremonies
+7. ORI-240 Adobe Experience Platform, CJA, Target, and Analytics
+8. ORI-230 Data Governance with DAMA-DMBOK
+9. ORI-300 Product Implementation Guidelines and Standards
+10. ORI-310 Modern Agile Product Leadership
+11. ORI-140 Python and AI-Assisted Automation
+12. ORI-130 JavaScript for Technical Implementers
+13. ORI-330 Cloud, Security, and Integration Architecture
+14. ORI-400 Technical and Behavioral Interviewing
 
-Future courses should target 24 to 40 questions per module depending on complexity.
+## Current question banks
+
+- ORI-200: 24 source questions per module, 10 displayed per module attempt, 192 total, 30-question final
+- ORI-110: 30 source questions per module, 12 displayed per module attempt, 330 total, 40-question final
+
+Future courses should target 24 to 40 distinct reasoning questions per module. Banks should vary scenario, interpretation, error diagnosis, and applied judgment rather than creating superficial wording variants.

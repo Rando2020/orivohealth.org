@@ -4,21 +4,51 @@ A portfolio-first technical learning platform for healthcare product, implementa
 
 ## Current LMS release
 
-This branch converts the original course catalog into a functional learning platform.
-
 - 16 connected courses and four role-based learning paths
-- ORI-200 fully authored with 32 lessons across eight modules
-- Written instruction, decision scenarios, guided labs, answer guidance, and credited visuals
-- 192-question API course bank
-- Eight randomized module quizzes
-- Randomized 30-question final assessment
-- 80% passing score with unlimited retakes and answer explanations
+- Two fully authored production courses registered through a reusable LMS registry
+- ORI-200 APIs: 32 lessons, eight modules, 192 source questions, and a 30-question final
+- ORI-110 SQL: 44 lessons, 11 modules, 330 source questions, and a 40-question final
+- Written instruction, decision scenarios, guided labs, answer guidance, credited visuals, and portfolio capstones
+- Randomized module quizzes, 80% passing score, unlimited retakes, and answer explanations
 - Email/password and Google authentication through Supabase
 - Local demo progress when Supabase is not configured
 - Cross-device lesson progress and quiz-attempt storage when signed in
 - Vercel SPA deployment configuration
 - Supabase Postgres schema and Row Level Security policies
-- Added ORI-315 PMP, Hybrid Delivery, and Agile Ceremonies
+- ORI-315 PMP, Hybrid Delivery, and Agile Ceremonies production outline
+
+## Production course registry
+
+`src/data/productionCourseRegistry.ts` registers production lessons, modules, question banks, quiz definitions, capstones, and downloads. Lesson, quiz, course-detail, and dashboard pages resolve content through this registry, allowing future HL7, FHIR, PMP, and other courses to reuse the same LMS experience.
+
+## SQL course practice database
+
+The SQL course includes an SQLite-compatible synthetic healthcare implementation database under `public/downloads/sql-course/`:
+
+1. `01_schema.sql`
+2. `02_seed_data.sql`
+3. `03_lab_queries.sql`
+4. `04_answer_queries.sql`
+
+The dataset includes clients, payers, pharmacies, locations, mappings, implementations, milestones, synthetic members, eligibility, claims, measures, releases, validation results, defects, and incidents. It intentionally includes nulls, duplicate business keys, invalid dates, missing relationships, stale loads, and conflicting statuses.
+
+### Run with SQLite
+
+```bash
+sqlite3 orivo_course.db < public/downloads/sql-course/01_schema.sql
+sqlite3 orivo_course.db < public/downloads/sql-course/02_seed_data.sql
+sqlite3 orivo_course.db
+```
+
+Inside SQLite:
+
+```sql
+.headers on
+.mode column
+.read public/downloads/sql-course/03_lab_queries.sql
+```
+
+DuckDB can also read the schema with minor compatibility adjustments. SQLite is the supported baseline because it is free, local, and requires no learner account or cloud data upload.
 
 ## Curriculum
 
@@ -47,7 +77,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The application loads without Supabase values and uses local demo progress. Account creation and cloud synchronization require the two environment variables below.
+The application loads without Supabase values and uses local demo progress. Account creation and cloud synchronization require:
 
 ```text
 VITE_SUPABASE_URL=
@@ -63,44 +93,33 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 5. Add local and production redirect URLs.
 6. Add the project URL and publishable key to local and Vercel environment variables.
 
-The database contains learner profiles, enrollments, lesson progress, quiz attempts, and course completions. Row Level Security limits learners to their own records.
-
 ## Vercel deployment
 
 1. Import `Rando2020/orivohealth.org` into Vercel.
-2. Use the default Vite build command: `npm run build`.
-3. Set the output directory to `dist`.
-4. Add both Supabase environment variables for Preview and Production.
-5. Redeploy after changing environment variables.
-6. Move `orivohealth.org` to the Vercel project after the production deployment is validated.
+2. Use `npm run build` and output directory `dist`.
+3. Add both Supabase environment variables for Preview and Production.
+4. Validate account-disabled local mode and Supabase-enabled preview mode.
+5. Move `orivohealth.org` only after the Vercel production deployment is validated.
 
-`vercel.json` rewrites application routes to `index.html` so account, lesson, and quiz deep links work as a single-page application.
+`vercel.json` rewrites application routes to `index.html` so account, lesson, quiz, and course deep links work.
 
 ## Content architecture
 
-- `src/data/catalog.ts`: original curriculum and paths
-- `src/data/registerExtendedCatalog.ts`: PMP course registration
+- `src/data/productionCourseRegistry.ts`: reusable production-course registry
 - `src/data/apiCourseContent.ts`: 32 production API lessons
-- `src/data/apiQuestionBank.ts`: 192 generated assessment questions
-- `src/data/lmsTypes.ts`: lesson and quiz content contracts
-- `src/pages/LessonPage.tsx`: lesson, visual, scenario, lab, and source experience
-- `src/pages/QuizPage.tsx`: randomized quiz engine and explanations
+- `src/data/apiQuestionBank.ts`: 192 API assessment questions
+- `src/data/sqlCourseContent.ts`: 44 production SQL lessons
+- `src/data/sqlQuestionBank.ts`: 330 SQL assessment questions
+- `src/data/lmsTypes.ts`: reusable lesson and quiz contracts, including code and table prompts
+- `src/pages/LessonPage.tsx`: generic lesson, visual, scenario, lab, source, and download experience
+- `src/pages/QuizPage.tsx`: generic randomized quiz engine with code, table, and source support
+- `src/pages/DashboardPage.tsx`: multi-course learner progress
 - `src/context/AuthContext.tsx`: learner authentication
 - `src/lib/lmsProgress.ts`: local and Supabase progress persistence
 
 ## Production content standard
 
-Every course promoted from outline to production should contain:
-
-- Orientation and diagnostic assessment
-- Fully written lessons
-- Original diagrams adapted from credited primary sources
-- Implementation scenarios
-- Guided labs and answer criteria
-- Large randomized question banks
-- Module quizzes and final assessment
-- Portfolio capstone
-- Interview translation
+Every course promoted from outline to production should contain fully written lessons, credited original diagrams, implementation scenarios, guided labs, answer criteria, a large randomized question bank, module quizzes, a final assessment, a portfolio capstone, and interview translation.
 
 ## Content safety
 
