@@ -8,16 +8,27 @@ export interface LocalLmsState {
   quizScores: Record<string, number>
 }
 
+function emptyState(): LocalLmsState {
+  return { completedLessons: {}, quizScores: {} }
+}
+
 function loadLocal(): LocalLmsState {
+  if (typeof window === 'undefined') return emptyState()
   try {
     const value = window.localStorage.getItem(LOCAL_KEY)
-    return value ? JSON.parse(value) as LocalLmsState : { completedLessons: {}, quizScores: {} }
+    if (!value) return emptyState()
+    const parsed = JSON.parse(value) as Partial<LocalLmsState>
+    return {
+      completedLessons: parsed.completedLessons ?? {},
+      quizScores: parsed.quizScores ?? {},
+    }
   } catch {
-    return { completedLessons: {}, quizScores: {} }
+    return emptyState()
   }
 }
 
 function saveLocal(state: LocalLmsState) {
+  if (typeof window === 'undefined') return
   window.localStorage.setItem(LOCAL_KEY, JSON.stringify(state))
 }
 
@@ -35,7 +46,7 @@ export async function setLessonComplete(user: User | null, courseId: string, les
   saveLocal(state)
 
   if (!supabase || !user) return
-  await supabase.from('lesson_progress').upsert({
+  const { error } = await supabase.from('lesson_progress').upsert({
     user_id: user.id,
     course_id: courseId,
     lesson_id: lessonId,
@@ -43,6 +54,7 @@ export async function setLessonComplete(user: User | null, courseId: string, les
     completed_at: completed ? new Date().toISOString() : null,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id,course_id,lesson_id' })
+  if (error) throw new Error('Cloud lesson synchronization failed.')
 }
 
 export async function recordQuizAttempt(
@@ -58,7 +70,7 @@ export async function recordQuizAttempt(
   saveLocal(state)
 
   if (!supabase || !user) return
-  await supabase.from('quiz_attempts').insert({
+  const { error } = await supabase.from('quiz_attempts').insert({
     user_id: user.id,
     course_id: courseId,
     quiz_id: quizId,
@@ -67,16 +79,37 @@ export async function recordQuizAttempt(
     question_ids: questionIds,
     answers,
   })
+  if (error) throw new Error('Cloud quiz synchronization failed.')
 }
 
 export async function syncUserProgress(user: User | null) {
   const local = loadLocal()
   if (!supabase || !user) return local
 
-  const [{ data: lessonRows }, { data: quizRows }] = await Promise.all([
+  const localLessons = Object.entries(local.completedLessons)
+    .filter(([, completed]) => completed)
+    .map(([key]) => {
+      const separator = key.indexOf(':')
+      return {
+        user_id: user.id,
+        course_id: key.slice(0, separator),
+        lesson_id: key.slice(separator + 1),
+        completed: true,
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    })
+
+  if (localLessons.length > 0) {
+    const { error } = await supabase.from('lesson_progress').upsert(localLessons, { onConflict: 'user_id,course_id,lesson_id' })
+    if (error) throw new Error('Local lesson progress could not be uploaded.')
+  }
+
+  const [{ data: lessonRows, error: lessonError }, { data: quizRows, error: quizError }] = await Promise.all([
     supabase.from('lesson_progress').select('course_id, lesson_id, completed').eq('user_id', user.id),
     supabase.from('quiz_attempts').select('quiz_id, score').eq('user_id', user.id),
   ])
+  if (lessonError || quizError) throw new Error('Cloud progress could not be retrieved.')
 
   for (const row of lessonRows ?? []) {
     local.completedLessons[localLessonKey(row.course_id, row.lesson_id)] = Boolean(row.completed)
