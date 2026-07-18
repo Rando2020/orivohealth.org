@@ -14,6 +14,9 @@ test('core learner path works in local fallback mode', async ({ page, request })
   await page.getByRole('button', { name: 'Mark lesson complete' }).click()
   await expect(page.getByRole('button', { name: 'Completed' })).toBeVisible()
 
+  await page.goto('/learn/apis-webhooks-integration/sync-async')
+  await expect(page.getByRole('button', { name: 'Mark lesson complete' })).toBeVisible()
+
   await page.goto('/courses/sql-product-implementation')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('SQL')
   const downloadResponse = await request.get('/downloads/sql-course/01_schema.sql')
@@ -49,6 +52,15 @@ test('invalid deep links render useful states', async ({ page }) => {
 
   await page.goto('/nothing-here')
   await expect(page.getByText('This page is not in the curriculum.')).toBeVisible()
+})
+
+test('keyboard skip link moves focus to main content', async ({ page }) => {
+  await page.goto('/')
+  await page.keyboard.press('Tab')
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' })
+  await expect(skipLink).toBeFocused()
+  await skipLink.press('Enter')
+  await expect(page.locator('#main-content')).toBeFocused()
 })
 
 test('layout has no viewport-level horizontal overflow', async ({ page }) => {
