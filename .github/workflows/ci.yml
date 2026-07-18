@@ -26,9 +26,15 @@ jobs:
       - name: Install SQLite
         run: sudo apt-get update && sudo apt-get install -y sqlite3
       - name: Unit and registry tests
-        run: npm run test
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test 2>&1 | tee test.log
       - name: Validate SQL learning dataset
-        run: npm run test:sql
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:sql 2>&1 | tee sql-validation.log
       - name: Type-check and production build
         shell: bash
         run: |
@@ -37,7 +43,10 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Browser smoke tests
-        run: npm run test:e2e
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee playwright.log
       - name: Upload validation evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -45,6 +54,9 @@ jobs:
           name: validation-evidence
           if-no-files-found: ignore
           path: |
+            test.log
+            sql-validation.log
             build.log
+            playwright.log
             playwright-report/
             test-results/
