@@ -17,7 +17,7 @@ export default defineConfig({
     timeout: 120_000,
   },
   projects: [
-    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'chromium-mobile', use: { ...devices['iPhone 13'] } },
+    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], browserName: 'chromium' } },
+    { name: 'chromium-mobile', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
   ],
 })
