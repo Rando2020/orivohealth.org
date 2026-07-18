@@ -11,23 +11,40 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Type-check and build
+      - name: Install SQLite
+        run: sudo apt-get update && sudo apt-get install -y sqlite3
+      - name: Unit and registry tests
+        run: npm run test
+      - name: Validate SQL learning dataset
+        run: npm run test:sql
+      - name: Type-check and production build
         shell: bash
         run: |
           set -o pipefail
           npm run build 2>&1 | tee build.log
-      - name: Upload build log
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser smoke tests
+        run: npm run test:e2e
+      - name: Upload validation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build.log
+          name: validation-evidence
+          if-no-files-found: ignore
+          path: |
+            build.log
+            playwright-report/
+            test-results/
