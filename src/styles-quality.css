@@ -1,0 +1,133 @@
+.lesson-review-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 32px 0 14px;
+  color: var(--muted-2);
+  font-size: 11px;
+}
+
+.lesson-review-metadata span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,.02);
+}
+
+.lesson-feedback-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 8px 0;
+  color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.lesson-feedback {
+  margin-top: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  padding: 24px;
+  background: rgba(13,28,24,.78);
+}
+
+.lesson-feedback-header,
+.feedback-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+}
+
+.lesson-feedback h2 {
+  margin: 6px 0 0;
+  font-size: 26px;
+}
+
+.lesson-feedback label,
+.rating-fieldset legend {
+  display: block;
+  margin: 16px 0 7px;
+  color: #c9d9d2;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lesson-feedback select,
+.lesson-feedback textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--text);
+  background: rgba(255,255,255,.025);
+  font: inherit;
+}
+
+.lesson-feedback textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.rating-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.rating-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.rating-buttons button,
+.icon-button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted-2);
+  background: rgba(255,255,255,.02);
+  cursor: pointer;
+}
+
+.rating-buttons button.active {
+  color: var(--gold);
+  border-color: rgba(228,199,129,.4);
+  background: rgba(228,199,129,.08);
+}
+
+.feedback-footer {
+  margin-top: 12px;
+}
+
+.feedback-footer small,
+.feedback-note {
+  color: var(--muted-2);
+  font-size: 11px;
+}
+
+@media (max-width: 620px) {
+  .lesson-feedback {
+    padding: 18px;
+  }
+
+  .lesson-feedback-header,
+  .feedback-footer {
+    align-items: flex-start;
+  }
+
+  .feedback-footer {
+    flex-direction: column;
+  }
+
+  .feedback-footer .button {
+    width: 100%;
+  }
+}
