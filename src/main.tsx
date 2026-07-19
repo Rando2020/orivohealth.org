@@ -11,6 +11,7 @@ import './styles4.css'
 import './styles-lms.css'
 import './styles-lms2.css'
 import './styles-hardening.css'
+import './styles-quality.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

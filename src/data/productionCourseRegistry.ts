@@ -1,6 +1,8 @@
 import { apiLessons, apiModules } from './apiCourseContent'
 import { apiQuestionBank, apiQuizDefinitions } from './apiQuestionBank'
-import type { FullLesson, QuizDefinition, QuizQuestion } from './lmsTypes'
+import { curatedApiQuestions, curatedSqlQuestions } from './curatedQualityQuestions'
+import type { FullLesson, QuizDefinition, QuizQuestion, ReviewMetadata } from './lmsTypes'
+import { enhanceApiLessons, enhanceQuestions, enhanceSqlLessons, reviewMetadata } from './qualityEnhancements'
 import { sqlCapstone, sqlLessons, sqlModules } from './sqlCourseContent'
 import { sqlQuestionBank, sqlQuizDefinitions } from './sqlQuestionBank'
 
@@ -24,29 +26,48 @@ export interface ProductionCourse {
     artifacts: string[]
   }
   downloads?: Array<{ label: string; url: string; description: string }>
+  review: ReviewMetadata
+}
+
+const reviewedApiLessons = enhanceApiLessons(apiLessons)
+const reviewedSqlLessons = enhanceSqlLessons(sqlLessons)
+const reviewedApiQuestions = enhanceQuestions([...apiQuestionBank, ...curatedApiQuestions])
+const reviewedSqlQuestions = enhanceQuestions([...sqlQuestionBank, ...curatedSqlQuestions])
+
+function reviewedQuizDefinitions(definitions: QuizDefinition[], questions: QuizQuestion[]) {
+  return definitions.map((quiz) => {
+    const pool = quiz.moduleId ? questions.filter((question) => question.moduleId === quiz.moduleId) : questions
+    return {
+      ...quiz,
+      description: quiz.moduleId
+        ? `A randomized ${quiz.questionCount}-question assessment drawn from a ${pool.length}-question reviewed module bank.`
+        : `A randomized ${quiz.questionCount}-question final assessment drawn from ${pool.length} reviewed questions across the course.`,
+    }
+  })
 }
 
 const apiCourse: ProductionCourse = {
   courseId: 'apis-webhooks-integration',
   status: 'production',
-  lessons: apiLessons,
+  lessons: reviewedApiLessons,
   modules: apiModules,
-  questionBank: apiQuestionBank,
-  quizDefinitions: apiQuizDefinitions,
+  questionBank: reviewedApiQuestions,
+  quizDefinitions: reviewedQuizDefinitions(apiQuizDefinitions, reviewedApiQuestions),
   capstone: {
     title: 'Pharmacy Onboarding API Implementation',
     description: 'Design, test, secure, document, and operationalize a synthetic pharmacy onboarding API and webhook workflow.',
     artifacts: ['OpenAPI document', 'Postman collection', 'Webhook runbook', 'Error catalog', 'Test evidence', 'Client implementation guide'],
   },
+  review: reviewMetadata('2.1.0', ['Postman and GitHub user interfaces may change.', 'The course teaches implementation fluency and does not confer vendor certification or compliance approval.'], 'RFC 9110, OpenAPI 3.2.0, RFC 9700, OWASP API Security 2023'),
 }
 
 const sqlCourse: ProductionCourse = {
   courseId: 'sql-product-implementation',
   status: 'production',
-  lessons: sqlLessons,
+  lessons: reviewedSqlLessons,
   modules: sqlModules,
-  questionBank: sqlQuestionBank,
-  quizDefinitions: sqlQuizDefinitions,
+  questionBank: reviewedSqlQuestions,
+  quizDefinitions: reviewedQuizDefinitions(sqlQuizDefinitions, reviewedSqlQuestions),
   capstone: sqlCapstone,
   downloads: [
     { label: '01 Schema creation', url: '/downloads/sql-course/01_schema.sql', description: 'SQLite-compatible schema for the synthetic healthcare implementation database.' },
@@ -54,6 +75,7 @@ const sqlCourse: ProductionCourse = {
     { label: '03 Learner lab queries', url: '/downloads/sql-course/03_lab_queries.sql', description: 'Progressive implementation and validation exercises.' },
     { label: '04 Answer queries', url: '/downloads/sql-course/04_answer_queries.sql', description: 'Reference solutions with control and certification patterns.' },
   ],
+  review: reviewMetadata('2.1.0', ['SQL behavior differs by engine.', 'SQLite is the executable learner baseline.', 'Snowflake and Informatica interface details require periodic review.'], 'PostgreSQL current, SQLite current, Snowflake current documentation'),
 }
 
 const registry = new Map<string, ProductionCourse>([

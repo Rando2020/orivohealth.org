@@ -6,20 +6,47 @@ A portfolio-first technical learning platform for healthcare product, implementa
 
 - 16 connected courses and four role-based learning paths
 - Two fully authored production courses registered through a reusable LMS registry
-- ORI-200 APIs: 32 lessons, eight modules, 192 source questions, and a 30-question final
-- ORI-110 SQL: 44 lessons, 11 modules, 330 source questions, and a 40-question final
+- ORI-200 APIs: 32 lessons, eight modules, 192 original questions, 24 curated applied questions, and a 30-question final
+- ORI-110 SQL: 44 lessons, 11 modules, 330 original questions, 33 curated applied questions, and a 40-question final
+- 76 production lessons and 579 runtime assessment questions after the quality audit
 - Written instruction, decision scenarios, guided labs, answer guidance, credited visuals, and portfolio capstones
 - Randomized module quizzes, 80% passing score, unlimited retakes, and answer explanations
 - Email/password and Google authentication through Supabase
 - Local demo progress when Supabase is not configured
 - Cross-device lesson progress and quiz-attempt storage when signed in
+- Optional lesson feedback with local drafts and signed-in Supabase submission
 - Vercel SPA routing and production security headers
-- Automated registry, scoring, SQLite, build, and browser smoke validation
-- Route-aware metadata, robots policy, sitemap, favicon, skip navigation, reduced-motion behavior, and learner-safe error states
+- Automated registry, source, assessment, scoring, SQLite, build, and browser smoke validation
+- Machine-readable lesson, module, question-bank, and lab audit artifacts
 
 ## Production course registry
 
-`src/data/productionCourseRegistry.ts` registers lessons, modules, question banks, quiz definitions, capstones, and downloads. Generic course, lesson, quiz, and dashboard pages resolve content through the registry. `src/data/registryValidation.ts` verifies references, duplicate IDs, correct options, quiz pools, and required lesson data.
+`src/data/productionCourseRegistry.ts` registers lessons, modules, question banks, quiz definitions, capstones, downloads, and review metadata. Generic course, lesson, quiz, and dashboard pages resolve content through the registry.
+
+`src/data/registryValidation.ts` validates:
+
+- course, module, lesson, quiz, and question references
+- duplicate IDs
+- exact normalized prompt duplicates
+- correct-option integrity
+- registered primary sources
+- cognitive categories
+- review metadata
+- complete labs and answer guides
+- quiz pool capacity
+
+## Instructional quality system
+
+- `src/data/instructionalQuality.ts`: fifteen-dimension lesson and module scoring plus question-bank analysis
+- `src/data/sourceRegistry.ts`: centralized primary sources, versions, review dates, and update sensitivity
+- `src/data/labManifest.ts`: one validation record for every production lesson lab
+- `src/data/curatedQualityQuestions.ts`: 57 hand-authored applied, troubleshooting, interpretation, and governance questions
+- `src/data/qualityEnhancements.ts`: review metadata, source assignment, and high-risk lesson corrections
+- `artifacts/instructional-quality-report.json`: generated lesson, module, and bank audit
+- `artifacts/instructional-quality-report.md`: human-readable CI summary
+- `artifacts/lab-manifest.json`: generated 76-lab manifest
+
+The original 522 generated questions remain part of the retrieval-practice baseline, but the audit reports their templated structure separately. Raw question volume is not treated as proof of independent reasoning coverage.
 
 ## SQL course practice database
 
@@ -54,7 +81,7 @@ Validate the complete downloadable dataset with:
 npm run test:sql
 ```
 
-SQLite is the supported baseline because it is free, local, and requires no learner account or cloud data upload.
+SQLite is the supported learner baseline because it is free, local, and requires no learner account or cloud data upload.
 
 ## Curriculum
 
@@ -83,7 +110,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The application loads without Supabase values and uses local demo progress. Account creation and cloud synchronization require:
+The application loads without Supabase values and uses local demo progress. Account creation, cloud synchronization, and submitted lesson feedback require:
 
 ```text
 VITE_SUPABASE_URL=
@@ -95,26 +122,42 @@ Never place a Supabase service-role key in a `VITE_` variable or browser code.
 ## Validation commands
 
 ```bash
-npm run test          # Vitest scoring and registry integrity
+npm run test          # Vitest registry, scoring, feedback, source, lab, and instructional audits
 npm run test:sql      # SQLite schema, fixtures, answers, and safety checks
 npm run build         # TypeScript and Vite production build
 npm run test:e2e      # Playwright desktop and mobile smoke tests
 ```
 
-GitHub Actions runs all required checks. Browser smoke tests cover API and SQL course routes, local lesson completion, quiz submission, dashboard rendering, SQL download access, invalid deep links, and page-level overflow.
+GitHub Actions uploads the generated quality reports and browser evidence with every branch and pull-request validation run.
 
 ## Supabase setup
 
 1. Create a Supabase project.
 2. Run `supabase/migrations/001_lms.sql` in the SQL editor.
-3. Confirm Row Level Security is enabled and policies use `auth.uid()`.
-4. Enable Email authentication.
-5. Configure email confirmation and sender templates.
-6. Configure Google as an OAuth provider.
-7. Add local, Vercel Preview, and production redirect URLs.
-8. Add the project URL and publishable key to Vercel Preview and Production.
-9. Redeploy after changing Vite environment variables.
-10. Complete the two-user RLS test in `docs/AUTHENTICATION_SETUP.md`.
+3. Run `supabase/migrations/002_lesson_feedback.sql`.
+4. Confirm Row Level Security is enabled and own-record policies use `auth.uid()`.
+5. Enable Email authentication.
+6. Configure email confirmation and sender templates.
+7. Configure Google as an OAuth provider.
+8. Add local, Vercel Preview, and production redirect URLs.
+9. Add the project URL and publishable key to Vercel Preview and Production.
+10. Redeploy after changing Vite environment variables.
+11. Complete two-user RLS testing for progress and lesson feedback.
+
+## Learner feedback
+
+The lesson feedback control is optional and does not block completion.
+
+- Signed-out learners can save an unsent local draft.
+- The interface clearly states that a local draft has not been submitted.
+- Signed-in learners can submit a rating, issue type, and up to 1,500 characters.
+- Learners can read only their own feedback records.
+- Administrative review remains manual.
+- Learners are instructed not to include patient, client, employer, credential, confidential, or proprietary information.
+
+## Privacy-conscious analytics
+
+`src/lib/analyticsEvents.ts` defines a future first-party event contract. No analytics sender or advertising tracker is installed. The contract allows course, lesson, quiz, score-band, pass, download, and feedback-submission events while prohibiting answers, SQL, tokens, names, email, free-text feedback, health information, client data, employer data, credentials, and advertising identifiers.
 
 ## Vercel deployment
 
@@ -125,7 +168,7 @@ GitHub Actions runs all required checks. Browser smoke tests cover API and SQL c
 5. Node version: 22.
 6. Add both Supabase variables for Preview and Production.
 7. Validate local-fallback behavior on Preview before adding credentials.
-8. Validate email and Google authentication after adding credentials.
+8. Validate email, Google authentication, progress RLS, and feedback RLS after adding credentials.
 9. Run `docs/MANUAL_QA_CHECKLIST.md`.
 10. Add `orivohealth.org` and `www.orivohealth.org` to Vercel.
 11. Copy the exact Vercel DNS values and remove conflicting GitHub Pages records only after Preview approval.
@@ -133,36 +176,24 @@ GitHub Actions runs all required checks. Browser smoke tests cover API and SQL c
 13. Record the previous known-good deployment before production promotion.
 14. Follow `docs/INCIDENT_AND_ROLLBACK.md` if production validation fails.
 
-`vercel.json` rewrites application routes to `index.html` and adds CSP, HSTS, frame, no-sniff, referrer, and permissions-policy headers.
+## Quality and production runbooks
 
-## Production runbooks
-
-- `docs/PRODUCTION_LAUNCH_CHECKLIST.md`: deployment, DNS, SSL, authentication, smoke, and rollback gates
-- `docs/MANUAL_QA_CHECKLIST.md`: desktop, mobile, accessibility, local, Supabase, quiz, and SQL validation
-- `docs/AUTHENTICATION_SETUP.md`: Supabase, OAuth, RLS, redirects, and local-to-cloud behavior
-- `docs/INCIDENT_AND_ROLLBACK.md`: severity, evidence, containment, Vercel rollback, recovery, and postmortem
-
-## Content architecture
-
-- `src/data/productionCourseRegistry.ts`: reusable production-course registry
-- `src/data/registryValidation.ts`: structural and assessment integrity checks
-- `src/data/apiCourseContent.ts`: 32 production API lessons
-- `src/data/apiQuestionBank.ts`: 192 API assessment questions
-- `src/data/sqlCourseContent.ts`: 44 production SQL lessons
-- `src/data/sqlQuestionBank.ts`: 330 SQL assessment questions
-- `src/data/lmsTypes.ts`: reusable lesson and quiz contracts
-- `src/pages/LessonPage.tsx`: generic lesson, visual, scenario, lab, source, download, and synchronized completion experience
-- `src/pages/QuizPage.tsx`: randomized assessment engine with exact scoring, code, tables, sources, empty-pool protection, and safe synchronization
-- `src/pages/DashboardPage.tsx`: multi-course learner progress and synchronization status
-- `src/context/AuthContext.tsx`: learner authentication and safe error translation
-- `src/lib/lmsProgress.ts`: local and Supabase progress persistence
-- `src/lib/quizScoring.ts`: tested exact scoring helpers
-- `tests/smoke.spec.ts`: desktop and mobile browser validation
-- `scripts/validate-sql.sh`: executable SQL dataset validation
+- `docs/INSTRUCTIONAL_QUALITY_STANDARD.md`
+- `docs/QUESTION_BANK_STANDARD.md`
+- `docs/CONTENT_REVIEW_PROCESS.md`
+- `docs/SOURCE_AND_CITATION_STANDARD.md`
+- `docs/LAB_VALIDATION_STANDARD.md`
+- `docs/LEARNER_FEEDBACK_PROCESS.md`
+- `docs/INSTRUCTIONAL_QUALITY_AUDIT.md`
+- `docs/QUESTION_BANK_AUDIT.md`
+- `docs/PRODUCTION_LAUNCH_CHECKLIST.md`
+- `docs/MANUAL_QA_CHECKLIST.md`
+- `docs/AUTHENTICATION_SETUP.md`
+- `docs/INCIDENT_AND_ROLLBACK.md`
 
 ## Production content standard
 
-Every course promoted from outline to production should contain fully written lessons, credited original diagrams, implementation scenarios, guided labs, answer criteria, a large randomized question bank, module quizzes, a final assessment, a portfolio capstone, interview translation, registry integrity validation, executable asset checks, and passing browser smoke tests.
+A future course cannot be labeled production-complete until it passes registry validation, primary-source registration, review metadata, lab-manifest coverage, executable or manual lab validation, question-bank integrity, cognitive-distribution review, accessibility review, production build, and browser smoke testing.
 
 ## Content and identity safety
 
