@@ -85,12 +85,38 @@ function inferCategory(question: QuizQuestion): CognitiveCategory {
   return 'technical-interpretation'
 }
 
+function defaultQuestionSourceId(question: QuizQuestion) {
+  if (question.courseId === 'apis-webhooks-integration') {
+    const byModule: Record<string, string> = {
+      m1: 'http-rfc-9110',
+      m2: 'http-rfc-9110',
+      m3: 'oauth-rfc-9700',
+      m4: 'postman-docs',
+      m5: 'http-rfc-9110',
+      m6: 'openapi-3-2',
+      m7: 'github-webhooks',
+      m8: 'owasp-api-2023',
+    }
+    return byModule[question.moduleId]
+  }
+  if (question.courseId === 'sql-product-implementation') {
+    if (question.moduleId === 'm10') return 'snowflake-docs'
+    if (question.moduleId === 'm11') return 'informatica-cdi'
+    return 'postgres-current'
+  }
+  return undefined
+}
+
 export function enhanceQuestions(questions: QuizQuestion[]) {
   return questions.map((question) => {
-    const source = question.sourceUrl ? getSourceByUrl(question.sourceUrl) : undefined
+    const explicitSource = question.sourceUrl ? getSourceByUrl(question.sourceUrl) : undefined
+    const sourceId = question.sourceId ?? explicitSource?.id ?? defaultQuestionSourceId(question)
+    const source = sourceId ? getSourceById(sourceId) : undefined
     return {
       ...question,
-      sourceId: question.sourceId ?? source?.id,
+      sourceId,
+      sourceLabel: question.sourceLabel ?? source?.title,
+      sourceUrl: question.sourceUrl ?? source?.url,
       cognitiveCategory: inferCategory(question),
       qualityNote: question.qualityNote ?? 'Structurally reviewed during the 2026 instructional-quality audit; generated-template questions remain flagged for continuing human review.',
     }
