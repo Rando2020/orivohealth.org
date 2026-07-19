@@ -1,4 +1,5 @@
 import type { ProductionCourse } from './productionCourseRegistry'
+import { getSourceById, getSourceByUrl } from './sourceRegistry'
 
 export interface RegistryIssue {
   courseId: string
@@ -16,6 +17,10 @@ function duplicates(values: string[]) {
   return [...repeated]
 }
 
+function normalizePrompt(prompt: string) {
+  return prompt.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
 export function validateProductionCourse(course: ProductionCourse): RegistryIssue[] {
   const issues: RegistryIssue[] = []
   const moduleIds = new Set(course.modules.map((module) => module.id))
@@ -23,11 +28,18 @@ export function validateProductionCourse(course: ProductionCourse): RegistryIssu
   const questionIds = new Set(course.questionBank.map((question) => question.id))
   const quizIds = new Set(course.quizDefinitions.map((quiz) => quiz.id))
 
+  if (!course.review?.contentVersion || !course.review?.lastReviewed || !course.review?.reviewOwner) {
+    issues.push({ courseId: course.courseId, code: 'MISSING_COURSE_REVIEW', message: 'Course review metadata is incomplete.' })
+  }
+
   for (const duplicate of duplicates(course.lessons.map((lesson) => lesson.id))) {
     issues.push({ courseId: course.courseId, code: 'DUPLICATE_LESSON_ID', message: `Duplicate lesson ID: ${duplicate}` })
   }
   for (const duplicate of duplicates(course.questionBank.map((question) => question.id))) {
     issues.push({ courseId: course.courseId, code: 'DUPLICATE_QUESTION_ID', message: `Duplicate question ID: ${duplicate}` })
+  }
+  for (const duplicate of duplicates(course.questionBank.map((question) => normalizePrompt(question.prompt)))) {
+    issues.push({ courseId: course.courseId, code: 'DUPLICATE_QUESTION_PROMPT', message: `Exact normalized prompt duplicate: ${duplicate}` })
   }
   for (const duplicate of duplicates(course.quizDefinitions.map((quiz) => quiz.id))) {
     issues.push({ courseId: course.courseId, code: 'DUPLICATE_QUIZ_ID', message: `Duplicate quiz ID: ${duplicate}` })
@@ -44,7 +56,13 @@ export function validateProductionCourse(course: ProductionCourse): RegistryIssu
     if (!moduleIds.has(lesson.moduleId)) issues.push({ courseId: course.courseId, code: 'LESSON_MISSING_MODULE', message: `Lesson ${lesson.id} references missing module ${lesson.moduleId}.` })
     if (lesson.courseId !== course.courseId) issues.push({ courseId: course.courseId, code: 'LESSON_WRONG_COURSE', message: `Lesson ${lesson.id} has courseId ${lesson.courseId}.` })
     if (!lesson.objective.trim()) issues.push({ courseId: course.courseId, code: 'EMPTY_OBJECTIVE', message: `Lesson ${lesson.id} has no objective.` })
-    if (lesson.lab.steps.length === 0 || lesson.lab.evidence.length === 0) issues.push({ courseId: course.courseId, code: 'INCOMPLETE_LAB', message: `Lesson ${lesson.id} has an incomplete lab.` })
+    if (lesson.lab.steps.length === 0 || lesson.lab.evidence.length === 0 || lesson.lab.answerGuide.length === 0) issues.push({ courseId: course.courseId, code: 'INCOMPLETE_LAB', message: `Lesson ${lesson.id} has an incomplete lab or answer guide.` })
+    if (!lesson.review?.contentVersion || !lesson.review?.lastReviewed || !lesson.review?.reviewOwner) issues.push({ courseId: course.courseId, code: 'MISSING_LESSON_REVIEW', message: `Lesson ${lesson.id} has incomplete review metadata.` })
+    if (lesson.sources.length === 0) issues.push({ courseId: course.courseId, code: 'MISSING_LESSON_SOURCE', message: `Lesson ${lesson.id} has no source.` })
+    for (const source of lesson.sources) {
+      const registered = source.sourceId ? getSourceById(source.sourceId) : getSourceByUrl(source.url)
+      if (!registered) issues.push({ courseId: course.courseId, code: 'UNREGISTERED_LESSON_SOURCE', message: `Lesson ${lesson.id} references unregistered source ${source.url}.` })
+    }
   }
 
   for (const question of course.questionBank) {
@@ -56,6 +74,9 @@ export function validateProductionCourse(course: ProductionCourse): RegistryIssu
       if (!optionIds.has(correctOptionId)) issues.push({ courseId: course.courseId, code: 'INVALID_CORRECT_OPTION', message: `Question ${question.id} references missing option ${correctOptionId}.` })
     }
     if (!question.explanation.trim()) issues.push({ courseId: course.courseId, code: 'EMPTY_EXPLANATION', message: `Question ${question.id} has no explanation.` })
+    const registered = question.sourceId ? getSourceById(question.sourceId) : question.sourceUrl ? getSourceByUrl(question.sourceUrl) : undefined
+    if (!registered) issues.push({ courseId: course.courseId, code: 'UNREGISTERED_QUESTION_SOURCE', message: `Question ${question.id} has no registered source.` })
+    if (!question.cognitiveCategory) issues.push({ courseId: course.courseId, code: 'MISSING_COGNITIVE_CATEGORY', message: `Question ${question.id} has no cognitive category.` })
   }
 
   for (const quiz of course.quizDefinitions) {
