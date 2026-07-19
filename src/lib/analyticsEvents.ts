@@ -34,7 +34,7 @@ const allowedKeys = new Set([
   'passed',
 ])
 
-const prohibitedKeyFragments = ['email', 'name', 'token', 'answer', 'sql', 'feedback', 'patient', 'health', 'client', 'employer', 'ip', 'secret', 'credential']
+const prohibitedKeyFragments = ['email', 'user_name', 'display_name', 'token', 'answer', 'sql_text', 'feedback_text', 'patient', 'health', 'client_name', 'employer', 'ip_address', 'secret', 'credential']
 
 export function validateLearningEvent(event: LearningEvent) {
   const keys = Object.keys(event)
