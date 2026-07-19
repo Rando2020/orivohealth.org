@@ -29,7 +29,7 @@ describe('LessonFeedback', () => {
     await user.click(screen.getByRole('button', { name: /report a lesson issue/i }))
     await user.type(screen.getByLabelText(/details/i), 'This explanation is unclear.')
     await user.click(screen.getByRole('button', { name: /save draft/i }))
-    expect(await screen.findByText(/choose an issue type/i)).toBeInTheDocument()
+    expect(await screen.findByRole('status')).toHaveTextContent(/choose an issue type/i)
   })
 
   it('supports rating-only feedback', async () => {
