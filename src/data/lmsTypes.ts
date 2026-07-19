@@ -1,7 +1,17 @@
+export interface ReviewMetadata {
+  contentVersion: string
+  lastReviewed: string
+  reviewOwner: string
+  reviewStatus: 'reviewed' | 'needs-review' | 'blocked'
+  sourceVersion?: string
+  knownLimitations: string[]
+}
+
 export interface LessonSource {
   label: string
   url: string
   publisher: string
+  sourceId?: string
 }
 
 export interface LessonVisual {
@@ -47,9 +57,11 @@ export interface FullLesson {
   lab: LessonLab
   keyTakeaways: string[]
   sources: LessonSource[]
+  review?: ReviewMetadata
 }
 
 export type QuizQuestionType = 'single' | 'multiple' | 'true-false'
+export type CognitiveCategory = 'foundation' | 'technical-interpretation' | 'implementation-scenario' | 'troubleshooting' | 'risk-governance'
 
 export interface QuizOption {
   id: string
@@ -74,7 +86,10 @@ export interface QuizQuestion {
   explanation: string
   sourceLabel?: string
   sourceUrl?: string
+  sourceId?: string
   difficulty: 'foundation' | 'application' | 'advanced'
+  cognitiveCategory?: CognitiveCategory
+  qualityNote?: string
 }
 
 export interface QuizDefinition {
