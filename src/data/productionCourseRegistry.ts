@@ -34,13 +34,25 @@ const reviewedSqlLessons = enhanceSqlLessons(sqlLessons)
 const reviewedApiQuestions = enhanceQuestions([...apiQuestionBank, ...curatedApiQuestions])
 const reviewedSqlQuestions = enhanceQuestions([...sqlQuestionBank, ...curatedSqlQuestions])
 
+function reviewedQuizDefinitions(definitions: QuizDefinition[], questions: QuizQuestion[]) {
+  return definitions.map((quiz) => {
+    const pool = quiz.moduleId ? questions.filter((question) => question.moduleId === quiz.moduleId) : questions
+    return {
+      ...quiz,
+      description: quiz.moduleId
+        ? `A randomized ${quiz.questionCount}-question assessment drawn from a ${pool.length}-question reviewed module bank.`
+        : `A randomized ${quiz.questionCount}-question final assessment drawn from ${pool.length} reviewed questions across the course.`,
+    }
+  })
+}
+
 const apiCourse: ProductionCourse = {
   courseId: 'apis-webhooks-integration',
   status: 'production',
   lessons: reviewedApiLessons,
   modules: apiModules,
   questionBank: reviewedApiQuestions,
-  quizDefinitions: apiQuizDefinitions,
+  quizDefinitions: reviewedQuizDefinitions(apiQuizDefinitions, reviewedApiQuestions),
   capstone: {
     title: 'Pharmacy Onboarding API Implementation',
     description: 'Design, test, secure, document, and operationalize a synthetic pharmacy onboarding API and webhook workflow.',
@@ -55,7 +67,7 @@ const sqlCourse: ProductionCourse = {
   lessons: reviewedSqlLessons,
   modules: sqlModules,
   questionBank: reviewedSqlQuestions,
-  quizDefinitions: sqlQuizDefinitions,
+  quizDefinitions: reviewedQuizDefinitions(sqlQuizDefinitions, reviewedSqlQuestions),
   capstone: sqlCapstone,
   downloads: [
     { label: '01 Schema creation', url: '/downloads/sql-course/01_schema.sql', description: 'SQLite-compatible schema for the synthetic healthcare implementation database.' },
