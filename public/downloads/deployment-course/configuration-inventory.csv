@@ -1,0 +1,5 @@
+item_id,item_name,type,purpose,owner,source_of_definition,development,qa,staging,production,validation,change_authority,rollback_behavior,sensitive
+CFG-001,API base URL,configuration,Route frontend requests,Platform owner,Versioned deployment config,placeholder-dev-url,placeholder-qa-url,placeholder-staging-url,protected-reference,Health and route tests,Release authority,Restore prior approved value,No
+CFG-002,Deployment credential,secret,Authorize deployment job,Security owner,Approved secret manager,development-reference,qa-reference,staging-reference,production-reference,Credential reference and audit only,Security owner,Rotate or restore approved reference,Yes
+CFG-003,Release feature exposure,feature_flag,Control client rollout,Product owner,Feature-flag service,off,off,pilot,approved-cohort,Targeting and both-state tests,Product and release authority,Disable flag and reconcile in-flight work,No
+CFG-004,Release schema version,data_migration,Track durable structure,Data owner,Migration repository,current,current,current,approved-version,Migration and reconciliation tests,Data release authority,Compatible restore or roll-forward,No
