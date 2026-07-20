@@ -1,0 +1,7 @@
+role,environment,resource,permission,purpose,approval,review_cadence,logging,revocation_trigger
+Developer,Development,Application services,Deploy and troubleshoot,Build and integration,Engineering manager,Quarterly,Individual identity and audit log,Role change or project exit
+Quality engineer,QA,Application and test data,Execute tests and review logs,Quality evidence,Quality lead,Quarterly,Individual identity and audit log,Role change or project exit
+Implementation lead,UAT,UAT tenant and evidence,Coordinate testing and view results,Business acceptance,Product owner,Per implementation,Individual identity and audit log,UAT completion
+Release operator,Production,Deployment environment,Deploy approved artifact,Controlled release,Production authority,Per release,Deployment history and individual identity,Release completion or role change
+Support engineer,Production,Read-only service evidence,View approved logs dashboards and status,Incident triage,Service owner,Monthly,Individual identity and access log,Incident closure or role change
+Database responder,Production,Approved data objects,Time-bound diagnostic or recovery access,Data incident response,Data owner and incident authority,Per incident,Query and access audit,Incident closure
