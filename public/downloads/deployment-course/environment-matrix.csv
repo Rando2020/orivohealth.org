@@ -1,0 +1,7 @@
+environment,purpose,users,owner,data_class,artifact_source,configuration_source,dependencies,refresh_behavior,production_differences,evidence_produced,release_authority
+Local,Individual development,Developers,Engineering,Synthetic,Local branch,Local non-secret config,Mocks or local services,Developer controlled,Not production-like,Unit and component evidence,None
+Development,Shared integration,Engineering and product,Engineering,Synthetic,Reviewed branch,Development variables,Shared development services,Planned reset,May use simplified dependencies,Integration evidence,Engineering
+QA,Controlled verification,QA and delivery,Quality Engineering,Synthetic or approved masked,Release candidate,QA variables,Representative test services,Coordinated refresh,Documented gaps,Regression and defect evidence,Quality lead
+Staging,Production-like validation,Engineering QA delivery,Platform owner,Synthetic or approved masked,Immutable candidate,Staging variables,Production-like dependencies,Controlled refresh,Documented gaps,Deployment and smoke evidence,Release lead
+UAT,Business acceptance,Client and product users,Implementation lead,Synthetic,Immutable candidate,UAT variables,Representative dependencies,Protected test cycle,Documented gaps,UAT evidence,Product owner
+Production,Real operations,Approved users,Service owner,Production,Approved artifact,Production protected config,Production dependencies,No uncontrolled refresh,Authoritative environment,Operational and business evidence,Named production authority
